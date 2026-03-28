@@ -1,2 +1,2 @@
 # terraform
-terraform form from scatch 
+terraform form from scratch 
