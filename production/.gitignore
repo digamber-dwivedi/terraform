@@ -1,9 +1,15 @@
+# Terraform files
 .terraform/
 .terraform.lock.hcl
 terraform.tfstate
 terraform.tfstate.backup
 *.tfvars
 *.tfvars.json
+
+# Sensitive files
 *.pem
-aws/
-awscliv2.zip
+*.key
+
+# OS files
+.DS_Store
+Thumbs.db
