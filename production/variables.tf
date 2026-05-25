@@ -12,5 +12,5 @@ variable "key_name" {
 
 variable "home_ip_range" {
   description = "Home IP range for SSH access"
-  default     = "0.0.0.0/0"  # Override with actual in .tfvars
+  default     = "152.59.0.0/16"
 }

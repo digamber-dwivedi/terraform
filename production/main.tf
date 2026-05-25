@@ -111,11 +111,27 @@ resource "aws_security_group" "k8s_sg" {
   }
 
   ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.2.0.0/16"]
+    description = "SSH internal Ansible"
+  }
+
+  ingress {
     from_port   = 6443
     to_port     = 6443
     protocol    = "tcp"
     cidr_blocks = [var.home_ip_range]
     description = "kubectl - Digamber home"
+  }
+
+  ingress {
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = ["10.2.0.0/16"]
+    description = "K8s API internal"
   }
 
   ingress {
@@ -135,11 +151,43 @@ resource "aws_security_group" "k8s_sg" {
   }
 
   ingress {
+    from_port   = 31080
+    to_port     = 31080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Nginx Ingress NodePort HTTP"
+  }
+
+  ingress {
+    from_port   = 31443
+    to_port     = 31443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Nginx Ingress NodePort HTTPS"
+  }
+
+  ingress {
+    from_port   = 32000
+    to_port     = 32000
+    protocol    = "tcp"
+    cidr_blocks = [var.home_ip_range]
+    description = "Grafana dashboard"
+  }
+
+  ingress {
     from_port   = 8472
     to_port     = 8472
     protocol    = "udp"
     cidr_blocks = ["10.2.0.0/16"]
     description = "Flannel VXLAN internal"
+  }
+
+  ingress {
+    from_port   = 10250
+    to_port     = 10250
+    protocol    = "tcp"
+    cidr_blocks = ["10.2.0.0/16"]
+    description = "Kubelet API internal"
   }
 
   egress {
@@ -230,15 +278,21 @@ resource "aws_lb" "main" {
   }
 }
 
-# Target Group HTTP
+# Target Group NodePort
 resource "aws_lb_target_group" "http" {
-  name     = "${var.project}-tg-http"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.main.id
+  name        = "${var.project}-tg-nodeport"
+  port        = 31080
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "instance"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   health_check {
-    path                = "/"
+    path                = "/healthz/ready"
+    port                = "31080"
     healthy_threshold   = 2
     unhealthy_threshold = 3
     timeout             = 5
@@ -246,9 +300,23 @@ resource "aws_lb_target_group" "http" {
   }
 
   tags = {
-    Name        = "${var.project}-tg-http"
+    Name        = "${var.project}-tg-nodeport"
     Environment = var.environment
   }
+}
+
+# Register Worker 1 in Target Group
+resource "aws_lb_target_group_attachment" "worker_1" {
+  target_group_arn = aws_lb_target_group.http.arn
+  target_id        = aws_instance.worker_1.id
+  port             = 31080
+}
+
+# Register Worker 2 in Target Group
+resource "aws_lb_target_group_attachment" "worker_2" {
+  target_group_arn = aws_lb_target_group.http.arn
+  target_id        = aws_instance.worker_2.id
+  port             = 31080
 }
 
 # ALB Listener HTTP
