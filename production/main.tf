@@ -102,13 +102,6 @@ resource "aws_route_table_association" "public_2" {
 resource "aws_security_group" "k8s_sg" {
   vpc_id = aws_vpc.main.id
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.home_ip_range]
-    description = "SSH - Digamber home"
-  }
 
   ingress {
     from_port   = 22
@@ -118,13 +111,6 @@ resource "aws_security_group" "k8s_sg" {
     description = "SSH internal Ansible"
   }
 
-  ingress {
-    from_port   = 6443
-    to_port     = 6443
-    protocol    = "tcp"
-    cidr_blocks = [var.home_ip_range]
-    description = "kubectl - Digamber home"
-  }
 
   ingress {
     from_port   = 6443
@@ -166,13 +152,6 @@ resource "aws_security_group" "k8s_sg" {
     description = "Nginx Ingress NodePort HTTPS"
   }
 
-  ingress {
-    from_port   = 32000
-    to_port     = 32000
-    protocol    = "tcp"
-    cidr_blocks = [var.home_ip_range]
-    description = "Grafana dashboard"
-  }
 
   ingress {
     from_port   = 8472
